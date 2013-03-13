@@ -78,8 +78,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a store per thread");
 
-            Console.WriteLine("Writing {0} with a store per thread {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a store per thread {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -87,7 +87,7 @@ namespace RavenDBPerformance
         private static void DocumentsWithDatabasePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
         {
             syncEvent.Reset();
-            Console.WriteLine("Writing {0} documents with a store per thread...", numberOfDocuments);
+            Console.WriteLine("Writing {0} documents with a database per thread...", numberOfDocuments);
 
             Thread[] threads = new Thread[10];
 
@@ -112,8 +112,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a database per thread");
 
-            Console.WriteLine("Writing {0} with a database per thread {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a database per thread {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -146,8 +146,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a database instance per thread");
 
-            Console.WriteLine("Writing {0} with a database instance per thread {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a database instance per thread {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -205,8 +205,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a session per thread");
 
-            Console.WriteLine("Writing {0} with a session per thread {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a session per thread {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -250,8 +250,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with session per document and multiple threads");
 
-            Console.WriteLine("Writing {0} with a session per document and multiple threads took {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a session per document and multiple threads took {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -277,8 +277,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with session for all document");
 
-            Console.WriteLine("Writing {0} with a session for all document took {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a session for all document took {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -303,8 +303,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with async session per document");
 
-            Console.WriteLine("Writing {0} with an async session per document took {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with an async session per document took {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -329,8 +329,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with session per document");
 
-            Console.WriteLine("Writing {0} with a session per document took {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a session per document took {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -353,8 +353,8 @@ namespace RavenDBPerformance
 
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with bulk inserts for all documents");
 
-            Console.WriteLine("Writing {0} with bulk inserts for all documents took {1}", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with bulk inserts for all documents took {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
         }
@@ -399,6 +399,7 @@ namespace RavenDBPerformance
                 this.NumberOfDocuments = numberOfDocs;
                 this.At = DateTimeOffset.Now;
                 this.Description = description;
+                this.DocsPerSecond = timeInMs == 0 ? -1 : numberOfDocs * 1000 / timeInMs;
             }
 
             public string Description { get; private set; }
@@ -408,6 +409,8 @@ namespace RavenDBPerformance
             public DateTimeOffset At { get; private set; }
 
             public long TimeInMs { get; private set; }
+
+            public long DocsPerSecond { get; private set; }
         }
     }
 }
