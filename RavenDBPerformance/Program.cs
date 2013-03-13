@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Document;
+using Raven.Client.Extensions;
 
 namespace RavenDBPerformance
 {
@@ -24,6 +25,7 @@ namespace RavenDBPerformance
                 int numberOfDocuments = Convert.ToInt32(args[0]);
 
                 DocumentsWithSessionPerDocument(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithAsyncSessionPerDocument(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionPerThread(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionForAll(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithBulk(numberOfDocuments, stopWatch, documentStore);
@@ -195,6 +197,32 @@ namespace RavenDBPerformance
             SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with session for all document");
 
             Console.WriteLine("Writing {0} with a session for all document took {1}", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds);
+
+            stopWatch.Reset();
+        }
+
+        private static void DocumentsWithAsyncSessionPerDocument(int numberOfDocuments, Stopwatch stopWatch,
+                                                            DocumentStore documentStore)
+        {
+            Console.WriteLine("Writing {0} documents with an async session per document...", numberOfDocuments);
+
+            stopWatch.Start();
+
+            for (int i = 0; i < numberOfDocuments; i++)
+            {
+                using (var session = documentStore.OpenAsyncSession())
+                {
+                    session.Store(new Data {Counter = i});
+                    session.SaveChangesAsync();
+                }
+            }
+
+            stopWatch.Stop();
+
+            SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with async session per document");
+
+            Console.WriteLine("Writing {0} with an async session per document took {1}", numberOfDocuments,
                               stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
