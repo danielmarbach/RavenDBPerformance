@@ -29,13 +29,24 @@ namespace RavenDBPerformance
                 DocumentsWithBulk(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionPerDocumentAndMultipleThreads(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithDocumentStorePerThread(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore);
             }
+
+            Console.ReadLine();
         }
 
         [ThreadStatic]
         private static DocumentStore store;
 
         private static readonly ManualResetEvent syncEvent = new ManualResetEvent(false);
+
+        private class ThreadConfig
+        {
+            public int NumberOfDocuments;
+            public int DatabaseInstanceId;
+            public int DatabaseId;
+        }
 
         private static void DocumentsWithDocumentStorePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
         {
@@ -46,7 +57,7 @@ namespace RavenDBPerformance
             for (int i = 0; i < 10; i++)
             {
                 threads[i] = new Thread(WorkerForStorePerThread);
-                threads[i].Start(numberOfDocuments / 10);
+                threads[i].Start(new ThreadConfig() { NumberOfDocuments = numberOfDocuments / 10, DatabaseInstanceId = 0, DatabaseId = 0 });
             }
 
             Thread.Sleep(TimeSpan.FromSeconds(10));
@@ -70,14 +81,81 @@ namespace RavenDBPerformance
             stopWatch.Reset();
         }
 
+        private static void DocumentsWithDatabasePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
+        {
+            Console.WriteLine("Writing {0} documents with a store per thread...", numberOfDocuments);
+
+            Thread[] threads = new Thread[10];
+
+            for (int i = 0; i < 10; i++)
+            {
+                threads[i] = new Thread(WorkerForStorePerThread);
+                threads[i].Start(new ThreadConfig() { NumberOfDocuments = numberOfDocuments / 10, DatabaseInstanceId = 0, DatabaseId = i });
+            }
+
+            Thread.Sleep(TimeSpan.FromSeconds(10));
+
+            stopWatch.Start();
+
+            syncEvent.Set();
+
+            for (int i = 0; i < 10; i++)
+            {
+                threads[i].Join();
+            }
+
+            stopWatch.Stop();
+
+            SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a database per thread");
+
+            Console.WriteLine("Writing {0} with a database per thread {1}", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds);
+
+            stopWatch.Reset();
+        }
+
+        private static void DocumentsWithDatabaseInstancePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
+        {
+            Console.WriteLine("Writing {0} documents with a database instance per thread...", numberOfDocuments);
+
+            Thread[] threads = new Thread[10];
+
+            for (int i = 0; i < 10; i++)
+            {
+                threads[i] = new Thread(WorkerForStorePerThread);
+                threads[i].Start(new ThreadConfig() { NumberOfDocuments = numberOfDocuments / 10, DatabaseInstanceId = i, DatabaseId = i });
+            }
+
+            Thread.Sleep(TimeSpan.FromSeconds(10));
+
+            stopWatch.Start();
+
+            syncEvent.Set();
+
+            for (int i = 0; i < 10; i++)
+            {
+                threads[i].Join();
+            }
+
+            stopWatch.Stop();
+
+            SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a database instance per thread");
+
+            Console.WriteLine("Writing {0} with a database instance per thread {1}", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds);
+
+            stopWatch.Reset();
+        }
+        
         private static void WorkerForStorePerThread(object state)
         {
-            var numberOfDocuments = (int) state;
+            ThreadConfig config = (ThreadConfig)state;
+            var numberOfDocuments = config.NumberOfDocuments;
 
             using (store = new DocumentStore
                                {
-                                   Url = "http://localhost:8080",
-                                   DefaultDatabase = "PerformanceTests"
+                                   Url = "http://localhost:" + (8080 + config.DatabaseInstanceId),
+                                   DefaultDatabase = "PerformanceTests" + config.DatabaseId
                                })
             {
                 store.Initialize();
