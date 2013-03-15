@@ -29,10 +29,10 @@ namespace RavenDBPerformance
                 DocumentsWithSessionPerThread(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionForAll(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithBulk(numberOfDocuments, stopWatch, documentStore);
-                DocumentsWithSessionPerDocumentAndMultipleThreads(numberOfDocuments, stopWatch, documentStore);
-                DocumentsWithDocumentStorePerThread(numberOfDocuments, stopWatch, documentStore);
-                DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore);
-                DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore);
+                //DocumentsWithSessionPerDocumentAndMultipleThreads(numberOfDocuments, stopWatch, documentStore);
+                //DocumentsWithDocumentStorePerThread(numberOfDocuments, stopWatch, documentStore);
+                //DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore);
+                //DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore);
             }
 
             Console.ReadLine();

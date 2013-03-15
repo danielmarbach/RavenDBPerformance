@@ -32,7 +32,7 @@ GO
 SET ANSI_PADDING ON
 GO
 
-CREATE TABLE [dbo].[Stats](
+CREATE TABLE [dbo].[Statistics](
 	[TimeInMs] [bigint] NOT NULL,
 	[Description] [varchar](255) NOT NULL,
 	[NumberOfDocuments] [bigint] NOT NULL,
