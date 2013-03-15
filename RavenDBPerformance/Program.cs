@@ -4,7 +4,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Raven.Client.Document;
+using Raven.Client.Embedded;
 using Raven.Client.Extensions;
+using System.Linq;
 
 namespace RavenDBPerformance
 {
@@ -12,13 +14,8 @@ namespace RavenDBPerformance
     {
         static void Main(string[] args)
         {
-            using(var documentStore = new DocumentStore
-                                    {
-                                        Url = "http://localhost:8080",
-                                        DefaultDatabase = "PerformanceTests"
-                                    })
+            using (var documentStore = CreateDocumentStore(args.ElementAtOrDefault(1)))
             {
-
                 documentStore.Initialize();
 
                 var stopWatch = new Stopwatch();
@@ -29,13 +26,30 @@ namespace RavenDBPerformance
                 DocumentsWithSessionPerThread(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionForAll(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithBulk(numberOfDocuments, stopWatch, documentStore);
-                //DocumentsWithSessionPerDocumentAndMultipleThreads(numberOfDocuments, stopWatch, documentStore);
-                //DocumentsWithDocumentStorePerThread(numberOfDocuments, stopWatch, documentStore);
-                //DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore);
-                //DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithSessionPerDocumentAndMultipleThreads(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithDocumentStorePerThread(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore);
             }
 
             Console.ReadLine();
+        }
+
+        private static DocumentStore CreateDocumentStore(string embedded)
+        {
+            if (string.IsNullOrEmpty(embedded))
+            {
+                return new DocumentStore
+                {
+                    Url = "http://localhost:8080",
+                    DefaultDatabase = "PerformanceTests"
+                };
+            }
+
+            return new EmbeddableDocumentStore
+                       {
+                           DataDirectory = @".\PerformanceTests"
+                       };
         }
 
         [ThreadStatic]
