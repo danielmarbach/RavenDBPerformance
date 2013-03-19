@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="aa5ce710-5fc5-406b-a4ea-db21782162e4" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+  <ClientOptions>
+    <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+    <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+    <EnableDataBinding>true</EnableDataBinding>
+    <ExcludedTypes />
+    <ImportXmlTypes>false</ImportXmlTypes>
+    <GenerateInternalTypes>false</GenerateInternalTypes>
+    <GenerateMessageContracts>false</GenerateMessageContracts>
+    <NamespaceMappings />
+    <CollectionMappings />
+    <GenerateSerializableTypes>true</GenerateSerializableTypes>
+    <Serializer>Auto</Serializer>
+    <UseSerializerForFaults>true</UseSerializerForFaults>
+    <ReferenceAllAssemblies>false</ReferenceAllAssemblies>
+    <ReferencedAssemblies>
+      <ReferencedAssembly AssemblyName="WcfContract" />
+    </ReferencedAssemblies>
+    <ReferencedDataContractTypes />
+    <ServiceContractMappings />
+  </ClientOptions>
+  <MetadataSources>
+    <MetadataSource Address="http://localhost:8180/raven" Protocol="http" SourceId="1" />
+  </MetadataSources>
+  <Metadata>
+    <MetadataFile FileName="RavenDbService.wsdl" MetadataType="Wsdl" ID="7b6b0ade-3e3d-4735-99b9-512d6e78e925" SourceId="1" SourceUrl="http://localhost:8180/raven?wsdl" />
+    <MetadataFile FileName="raven.disco" MetadataType="Disco" ID="44a427a5-06c3-4869-9bff-139e94154c34" SourceId="1" SourceUrl="http://localhost:8180/raven?disco" />
+    <MetadataFile FileName="raven.xsd" MetadataType="Schema" ID="eef2817f-df9d-42a2-8596-7f6465f70964" SourceId="1" SourceUrl="http://localhost:8180/raven?xsd=xsd2" />
+    <MetadataFile FileName="raven1.xsd" MetadataType="Schema" ID="9d06b59e-a824-4ca1-a1bc-47d461bd00f4" SourceId="1" SourceUrl="http://localhost:8180/raven?xsd=xsd0" />
+    <MetadataFile FileName="raven2.xsd" MetadataType="Schema" ID="0767505a-7c7c-4c2e-b9fa-39db9955eef2" SourceId="1" SourceUrl="http://localhost:8180/raven?xsd=xsd1" />
+  </Metadata>
+  <Extensions>
+    <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />
+    <ExtensionFile FileName="configuration.svcinfo" Name="configuration.svcinfo" />
+  </Extensions>
+</ReferenceGroup>

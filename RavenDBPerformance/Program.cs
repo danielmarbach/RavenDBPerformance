@@ -10,6 +10,8 @@ using System.Linq;
 
 namespace RavenDBPerformance
 {
+    using RavenDbWcfHost;
+
     class Program
     {
         static void Main(string[] args)
@@ -20,16 +22,21 @@ namespace RavenDBPerformance
 
                 var stopWatch = new Stopwatch();
                 int numberOfDocuments = Convert.ToInt32(args[0]);
-
+                bool embedded = !string.IsNullOrEmpty(args.ElementAtOrDefault(1));
                 DocumentsWithSessionPerDocument(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithAsyncSessionPerDocument(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionPerThread(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionForAll(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithBulk(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionPerDocumentAndMultipleThreads(numberOfDocuments, stopWatch, documentStore);
-                DocumentsWithDocumentStorePerThread(numberOfDocuments, stopWatch, documentStore);
-                DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore);
-                DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore);
+                if (!embedded) DocumentsWithDocumentStorePerThread(numberOfDocuments, stopWatch, documentStore);
+                if (!embedded) DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore, 10, 1);
+                if (!embedded) DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore, 5, 2);
+                if (!embedded) DocumentsWithDatabasePerThread(numberOfDocuments, stopWatch, documentStore, 3, 4);
+                if (!embedded) DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore, 10, 1);
+                if (!embedded) DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore, 5, 2);
+                if (!embedded) DocumentsWithDatabaseInstancePerThread(numberOfDocuments, stopWatch, documentStore, 3, 4);
+                if (!embedded) UseWcfRavenDb(numberOfDocuments, stopWatch, documentStore);
             }
 
             Console.ReadLine();
@@ -48,7 +55,7 @@ namespace RavenDBPerformance
 
             return new EmbeddableDocumentStore
                        {
-                           DataDirectory = @".\PerformanceTests"
+                           DataDirectory = @"c:\PerformanceTests", 
                        };
         }
 
@@ -98,17 +105,21 @@ namespace RavenDBPerformance
             stopWatch.Reset();
         }
 
-        private static void DocumentsWithDatabasePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
+        private static void DocumentsWithDatabasePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore, int numberOfDatabases, int numberOfThreadsPerDatabase)
         {
+            int totalThreads = numberOfDatabases * numberOfThreadsPerDatabase;
             syncEvent.Reset();
-            Console.WriteLine("Writing {0} documents with a database per thread...", numberOfDocuments);
+            Console.WriteLine("Writing {0} documents with a database per {1} thread(s), {2} total threads...", numberOfDocuments, numberOfThreadsPerDatabase, totalThreads);
 
-            Thread[] threads = new Thread[10];
+            Thread[] threads = new Thread[totalThreads];
+            int documentsPerThread = numberOfDocuments / totalThreads;
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < numberOfDatabases; i++)
+            for (int j = 0; j < numberOfThreadsPerDatabase; j++)
             {
-                threads[i] = new Thread(WorkerForStorePerThread);
-                threads[i].Start(new ThreadConfig() { NumberOfDocuments = numberOfDocuments / 10, DatabaseInstanceId = 0, DatabaseId = i });
+                int threadId = i * numberOfThreadsPerDatabase + j;
+                threads[threadId] = new Thread(WorkerForStorePerThread);
+                threads[threadId].Start(new ThreadConfig() { NumberOfDocuments = documentsPerThread, DatabaseInstanceId = 0, DatabaseId = i });
             }
 
             Thread.Sleep(TimeSpan.FromSeconds(10));
@@ -117,32 +128,36 @@ namespace RavenDBPerformance
 
             syncEvent.Set();
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < totalThreads; i++)
             {
                 threads[i].Join();
             }
 
             stopWatch.Stop();
 
-            SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a database per thread");
+            SaveStats(documentStore, numberOfDocuments, stopWatch, string.Format("Documents with a database per {0} threads, {1} total threads", numberOfThreadsPerDatabase, totalThreads));
 
-            Console.WriteLine("Writing {0} with a database per thread {1}, {2} docs/sec", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a database per {3} threads, {4} total threads: {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds, numberOfThreadsPerDatabase, totalThreads);
 
             stopWatch.Reset();
         }
 
-        private static void DocumentsWithDatabaseInstancePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
+        private static void DocumentsWithDatabaseInstancePerThread(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore, int numberOfDatabases, int numberOfThreadsPerDatabase)
         {
             syncEvent.Reset();
-            Console.WriteLine("Writing {0} documents with a database instance per thread...", numberOfDocuments);
+            int totalThreads = numberOfDatabases * numberOfThreadsPerDatabase;
+            Console.WriteLine("Writing {0} documents with a database instance per {1} thread(s), {2} thread total...", numberOfDocuments, numberOfThreadsPerDatabase, totalThreads);
 
-            Thread[] threads = new Thread[10];
+            Thread[] threads = new Thread[totalThreads];
+            int documentsPerThread = numberOfDocuments / totalThreads;
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < numberOfDatabases; i++)
+            for (int j = 0; j < numberOfThreadsPerDatabase; j++)
             {
-                threads[i] = new Thread(WorkerForStorePerThread);
-                threads[i].Start(new ThreadConfig() { NumberOfDocuments = numberOfDocuments / 10, DatabaseInstanceId = i, DatabaseId = i });
+                int threadId = i * numberOfThreadsPerDatabase + j;
+                threads[threadId] = new Thread(WorkerForStorePerThread);
+                threads[threadId].Start(new ThreadConfig() { NumberOfDocuments = documentsPerThread, DatabaseInstanceId = i, DatabaseId = i });
             }
 
             Thread.Sleep(TimeSpan.FromSeconds(10));
@@ -151,21 +166,21 @@ namespace RavenDBPerformance
 
             syncEvent.Set();
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < totalThreads; i++)
             {
                 threads[i].Join();
             }
 
             stopWatch.Stop();
 
-            SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with a database instance per thread");
+            SaveStats(documentStore, numberOfDocuments, stopWatch, string.Format("Documents with a database instance per {0} threads, {1} total threads", numberOfThreadsPerDatabase, totalThreads));
 
-            Console.WriteLine("Writing {0} with a database instance per thread {1}, {2} docs/sec", numberOfDocuments,
-                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
+            Console.WriteLine("Writing {0} with a database instance per {3} threads, {4} total threads: {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds, numberOfThreadsPerDatabase, totalThreads);
 
             stopWatch.Reset();
         }
-        
+
         private static void WorkerForStorePerThread(object state)
         {
             ThreadConfig config = (ThreadConfig)state;
@@ -349,6 +364,30 @@ namespace RavenDBPerformance
             stopWatch.Reset();
         }
 
+        private static void UseWcfRavenDb(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
+        {
+            Console.WriteLine("Writing {0} documents with a session per document using WcfHost...", numberOfDocuments);
+
+            var client = new RavenDB.RavenDbServiceClient();
+
+            stopWatch.Start();
+
+            for (int i = 0; i < numberOfDocuments; i++)
+            {
+                client.Store(new WcfData { Counter = i });
+            }
+
+            stopWatch.Stop();
+
+            SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with session per document using WcfHost");
+
+            Console.WriteLine("Writing {0} with a session per document took {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
+
+            stopWatch.Reset();
+        }
+
+
         private static void DocumentsWithBulk(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
         {
             Console.WriteLine("Writing {0} documents with bulk inserts for all documents...", numberOfDocuments);
@@ -386,6 +425,7 @@ namespace RavenDBPerformance
             }
         }
 
+        [Serializable]
         public class Data
         {
             public int Id { get; set; }

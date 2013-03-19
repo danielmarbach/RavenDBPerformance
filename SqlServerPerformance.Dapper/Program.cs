@@ -77,7 +77,7 @@ namespace SqlServerPerformance.Dapper
             {
                 this.TimeInMs = timeInMs;
                 this.NumberOfDocuments = numberOfDocs;
-                this.At = DateTimeOffset.Now;
+                this.At = DateTime.Now;
                 this.Description = description;
                 this.DocsPerSecond = timeInMs == 0 ? -1 : numberOfDocs * 1000 / timeInMs;
             }
@@ -86,7 +86,7 @@ namespace SqlServerPerformance.Dapper
 
             public long NumberOfDocuments { get; private set; }
 
-            public DateTimeOffset At { get; private set; }
+            public DateTime At { get; private set; }
 
             public long TimeInMs { get; private set; }
 
