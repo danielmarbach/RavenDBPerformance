@@ -9,6 +9,8 @@ using DapperExtensions.Mapper;
 
 namespace SqlServerPerformance.Dapper
 {
+    using System.Threading;
+
     class Program
     {
         static void Main(string[] args)
@@ -19,6 +21,7 @@ namespace SqlServerPerformance.Dapper
             DapperExtensions.DapperExtensions.DefaultMapper = typeof(PluralizedAutoClassMapper<>);
 
             DocumentsWithTransactionPerDocument(numberOfDocuments, stopWatch);
+            DocumentsWithTransactionPerDocument10Threads(numberOfDocuments, stopWatch);
 
             Console.ReadLine();
         }
@@ -49,6 +52,63 @@ namespace SqlServerPerformance.Dapper
             }
 
             Console.WriteLine("Writing {0} with transaction per document {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
+
+            stopWatch.Reset();
+        }        
+        
+        private static void DocumentsWithTransactionPerDocument10Threads(int numberOfDocuments, Stopwatch stopWatch)
+        {
+            Console.WriteLine("Writing {0} with transaction per document 10 threads...", numberOfDocuments);
+
+            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DefaultConnectionString"].ConnectionString))
+            {
+                connection.Open();
+                ManualResetEvent startSignal = new ManualResetEvent(false);
+
+                var threads = new Thread[10];
+                for (int j = 0; j < 10; j++)
+                {
+                    threads[j] = new Thread(
+                        () =>
+                            {
+                                using (
+                                    var connection2 =
+                                        new SqlConnection(
+                                            ConfigurationManager.ConnectionStrings["DefaultConnectionString"]
+                                                .ConnectionString))
+                                {
+                                    connection2.Open();
+                                    startSignal.WaitOne();
+                                    for (int i = 0; i < numberOfDocuments / 10; i++)
+                                    {
+                                        using (var nested = new TransactionScope(TransactionScopeOption.RequiresNew))
+                                        {
+                                            connection2.Insert(new Data { Counter = i });
+
+                                            nested.Complete();
+                                        }
+                                    }
+                                }
+                            });
+                    threads[j].Start();
+                }
+
+                Thread.Sleep(3);
+                stopWatch.Start();
+                
+                startSignal.Set();
+                foreach (var thread in threads)
+                {
+                    thread.Join();
+                }
+
+                stopWatch.Stop();
+
+                SaveStats(connection, numberOfDocuments, stopWatch, "Documents with transaction per document 10 threads.");
+            }
+
+            Console.WriteLine("Writing {0} with transaction per document 10 threads {1}, {2} docs/sec", numberOfDocuments,
                               stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
 
             stopWatch.Reset();
