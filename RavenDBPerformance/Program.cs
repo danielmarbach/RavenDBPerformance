@@ -10,6 +10,8 @@ using System.Linq;
 
 namespace RavenDBPerformance
 {
+    using System.Transactions;
+
     using RavenDbWcfHost;
 
     class Program
@@ -24,6 +26,7 @@ namespace RavenDBPerformance
                 int numberOfDocuments = Convert.ToInt32(args[0]);
                 bool embedded = !string.IsNullOrEmpty(args.ElementAtOrDefault(1));
                 DocumentsWithSessionPerDocument(numberOfDocuments, stopWatch, documentStore);
+                DocumentsWithSessionPerDocumentTwoPhaseCommit(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithAsyncSessionPerDocument(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionPerThread(numberOfDocuments, stopWatch, documentStore);
                 DocumentsWithSessionForAll(numberOfDocuments, stopWatch, documentStore);
@@ -364,6 +367,37 @@ namespace RavenDBPerformance
             stopWatch.Reset();
         }
 
+        private static void DocumentsWithSessionPerDocumentTwoPhaseCommit(int numberOfDocuments, Stopwatch stopWatch,
+                                                            DocumentStore documentStore)
+        {
+            Console.WriteLine("Writing {0} documents with a session per document with two pase commit...", numberOfDocuments);
+
+            var enlistment = new TwoPhaseCommitEnlistment();
+            stopWatch.Start();
+
+            for (int i = 0; i < numberOfDocuments; i++)
+            {
+                using (var scope = new TransactionScope())
+                {
+                    Transaction.Current.EnlistDurable(Guid.NewGuid(), enlistment, EnlistmentOptions.None);
+                    using (var session = documentStore.OpenSession())
+                    {
+                        session.Store(new Data { Counter = i });
+                        session.SaveChanges();
+                    }
+                }
+            }
+
+            stopWatch.Stop();
+
+            SaveStats(documentStore, numberOfDocuments, stopWatch, "Documents with session per document with two pase commit");
+
+            Console.WriteLine("Writing {0} with a session per document with two pase commit took {1}, {2} docs/sec", numberOfDocuments,
+                              stopWatch.ElapsedMilliseconds, numberOfDocuments * 1000 / stopWatch.ElapsedMilliseconds);
+
+            stopWatch.Reset();
+        }
+
         private static void UseWcfRavenDb(int numberOfDocuments, Stopwatch stopWatch, DocumentStore documentStore)
         {
             Console.WriteLine("Writing {0} documents with a session per document using WcfHost...", numberOfDocuments);
@@ -465,6 +499,29 @@ namespace RavenDBPerformance
             public long TimeInMs { get; private set; }
 
             public long DocsPerSecond { get; private set; }
+        }
+    }
+
+    public class TwoPhaseCommitEnlistment : IEnlistmentNotification
+    {
+        public void Prepare(PreparingEnlistment preparingEnlistment)
+        {
+            preparingEnlistment.Prepared();
+        }
+
+        public void Commit(Enlistment enlistment)
+        {
+            enlistment.Done();
+        }
+
+        public void Rollback(Enlistment enlistment)
+        {
+            enlistment.Done();
+        }
+
+        public void InDoubt(Enlistment enlistment)
+        {
+            enlistment.Done();
         }
     }
 }
