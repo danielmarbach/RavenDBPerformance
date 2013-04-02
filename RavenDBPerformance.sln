@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NServiceBusHandlerWithRaven
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messages", "Messages\Messages.csproj", "{B8D8ACF6-C1C8-46DB-95A0-C5A690B58E08}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RavenDBDtcSupport", "RavenDBDtcSupport\RavenDBDtcSupport.csproj", "{8C0A37E8-B02E-471B-BA1C-9F3416DD63AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,6 +65,10 @@ Global
 		{B8D8ACF6-C1C8-46DB-95A0-C5A690B58E08}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B8D8ACF6-C1C8-46DB-95A0-C5A690B58E08}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B8D8ACF6-C1C8-46DB-95A0-C5A690B58E08}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8C0A37E8-B02E-471B-BA1C-9F3416DD63AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8C0A37E8-B02E-471B-BA1C-9F3416DD63AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8C0A37E8-B02E-471B-BA1C-9F3416DD63AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8C0A37E8-B02E-471B-BA1C-9F3416DD63AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

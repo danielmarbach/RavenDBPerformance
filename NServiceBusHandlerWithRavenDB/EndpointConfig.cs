@@ -6,6 +6,7 @@ namespace NServiceBusHandlerWithRavenDB
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
 
     using Messages;
 
@@ -19,28 +20,34 @@ namespace NServiceBusHandlerWithRavenDB
     {
         public void Init()
         {
-            var store = new DocumentStore { Url = "http://localhost:8080", DefaultDatabase = "PerformanceTests" };
-            store.Initialize();
+            //var store = new DocumentStore { Url = "http://localhost:8080", DefaultDatabase = "PerformanceTests" };
+            //store.Initialize();
 
-            Configure.With().DefaultBuilder().XmlSerializer().RavenSubscriptionStorage().PurgeOnStartup(true);
+            Configure.With().DefaultBuilder().XmlSerializer().PurgeOnStartup(true);
 
-            Configure.Instance.Configurer.ConfigureComponent<UnitOfWork>(DependencyLifecycle.InstancePerCall);
-            Configure.Instance.Configurer.ConfigureComponent(store.OpenSession, DependencyLifecycle.InstancePerUnitOfWork);
+            //Configure.Instance.Configurer.ConfigureComponent<UnitOfWork>(DependencyLifecycle.InstancePerCall);
+            //Configure.Instance.Configurer.ConfigureComponent(store.OpenSession, DependencyLifecycle.InstancePerUnitOfWork);
         }
     }
 
     public class Handler : IHandleMessages<Event>
     {
-        private readonly IDocumentSession session;
+        //private readonly IDocumentSession session;
 
-        public Handler(IDocumentSession session)
+        public Handler(/*IDocumentSession session*/)
         {
-            this.session = session;
+            //this.session = session;
         }
 
         public void Handle(Event message)
         {
-            this.session.Store(message);
+            //this.session.Store(message);
+
+            var messageId = this.Bus().CurrentMessageContext.Id;
+            using (var stream = File.CreateText(string.Format(@".\{0}", messageId)))
+            {
+                stream.Write(messageId);
+            }
         }
     }
 
@@ -52,7 +59,7 @@ namespace NServiceBusHandlerWithRavenDB
 
         private Statistic stats;
 
-        public UnitOfWork(IDocumentSession session)
+        public UnitOfWork(/*IDocumentSession session*/)
         {
             this.session = session;
 
@@ -61,7 +68,7 @@ namespace NServiceBusHandlerWithRavenDB
 
         public void Begin()
         {
-            this.stats = this.session.Load<Statistic>("statistics") ?? new Statistic();
+            //this.stats = this.session.Load<Statistic>("statistics") ?? new Statistic();
 
             this.stopwatch.Start();
         }
@@ -70,14 +77,14 @@ namespace NServiceBusHandlerWithRavenDB
         {
             if (ex == null)
             {
-                this.session.SaveChanges();
+                //this.session.SaveChanges();
 
                 this.stopwatch.Stop();
 
-                this.stats.Runs.Add(new Stats("DocumentWithNServiceBusHandler", 1, this.stopwatch.ElapsedMilliseconds));
-                this.session.Store(this.stats);
+                //this.stats.Runs.Add(new Stats("DocumentWithNServiceBusHandler", 1, this.stopwatch.ElapsedMilliseconds));
+                //this.session.Store(this.stats);
 
-                this.session.SaveChanges();
+                //this.session.SaveChanges();
             }
         }
     }

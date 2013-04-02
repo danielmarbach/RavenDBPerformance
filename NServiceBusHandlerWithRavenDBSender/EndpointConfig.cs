@@ -4,6 +4,7 @@
 namespace NServiceBusHandlerWithRavenDBSender
 {
     using System;
+    using System.Threading.Tasks;
 
     using Messages;
 
@@ -30,10 +31,11 @@ namespace NServiceBusHandlerWithRavenDBSender
 
         public void Start()
         {
-            for (int i = 0; i < 1000; i++)
-            {
-                Bus.Publish(new Event());
-            }
+            Parallel.For(
+                0,
+                1000,
+                i =>
+                    { Bus.Publish(new Event()); });
 
             Console.WriteLine("done");
         }
